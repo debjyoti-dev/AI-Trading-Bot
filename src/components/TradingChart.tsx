@@ -3,56 +3,71 @@ import { Card } from '@/components/ui/card';
 import {
   ComposedChart,
   Line,
-  Bar,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
-  Legend,
   ResponsiveContainer,
   Area,
-  Cell
+  Customized
 } from 'recharts';
 import { CandleData, calculateSMA, calculateRSI, calculateMACD, calculateBollingerBands } from '@/lib/technicalIndicators';
 
-// Custom Candlestick component
-const Candlestick = (props: any) => {
-  const { x, y, width, height, payload, index } = props;
-  const { open, close, high, low } = payload;
+// Custom Candlestick Layer
+const CandlestickLayer = (props: any) => {
+  const { xAxisMap, yAxisMap, dataPointsX, dataPointsY, data } = props;
   
-  const isGreen = close >= open;
-  const color = isGreen ? 'hsl(var(--chart-3))' : 'hsl(var(--chart-4))';
-  const candleWidth = Math.max(width * 0.6, 2);
-  const xPos = x + (width - candleWidth) / 2;
+  if (!xAxisMap || !yAxisMap || !data) return null;
   
-  // Calculate positions
-  const yHigh = y - (height * ((high - close) / (close - open || 1)));
-  const yLow = y + height + (height * ((open - low) / (close - open || 1)));
-  const yTop = isGreen ? y : y + height;
-  const yBottom = isGreen ? y + height : y;
-  const candleHeight = Math.abs(height);
+  const xAxis = Object.values(xAxisMap)[0] as any;
+  const yAxis = Object.values(yAxisMap)[0] as any;
+  
+  if (!xAxis || !yAxis) return null;
+  
+  const { x: chartX, y: chartY, width: chartWidth, height: chartHeight } = xAxis;
+  const candleWidth = Math.max((chartWidth / data.length) * 0.6, 2);
   
   return (
     <g>
-      {/* High-Low line (wick) */}
-      <line
-        x1={xPos + candleWidth / 2}
-        y1={yHigh}
-        x2={xPos + candleWidth / 2}
-        y2={yLow}
-        stroke={color}
-        strokeWidth={1}
-      />
-      {/* Open-Close rectangle (body) */}
-      <rect
-        x={xPos}
-        y={yTop}
-        width={candleWidth}
-        height={Math.max(candleHeight, 1)}
-        fill={color}
-        stroke={color}
-        strokeWidth={1}
-      />
+      {data.map((item: any, index: number) => {
+        const { open, close, high, low } = item;
+        
+        const x = chartX + (index * chartWidth / data.length) + (chartWidth / data.length / 2);
+        const yHigh = chartY + yAxis.scale(high);
+        const yLow = chartY + yAxis.scale(low);
+        const yOpen = chartY + yAxis.scale(open);
+        const yClose = chartY + yAxis.scale(close);
+        
+        const isGreen = close >= open;
+        const color = isGreen ? 'hsl(142, 76%, 36%)' : 'hsl(0, 84%, 60%)';
+        
+        const yTop = Math.min(yOpen, yClose);
+        const yBottom = Math.max(yOpen, yClose);
+        const bodyHeight = Math.max(Math.abs(yBottom - yTop), 1);
+        
+        return (
+          <g key={index}>
+            {/* Wick */}
+            <line
+              x1={x}
+              y1={yHigh}
+              x2={x}
+              y2={yLow}
+              stroke={color}
+              strokeWidth={1}
+            />
+            {/* Body */}
+            <rect
+              x={x - candleWidth / 2}
+              y={yTop}
+              width={candleWidth}
+              height={bodyHeight}
+              fill={color}
+              stroke={color}
+            />
+          </g>
+        );
+      })}
     </g>
   );
 };
@@ -111,17 +126,26 @@ export function TradingChart({ candles, symbol }: TradingChartProps) {
       </div>
 
       <ResponsiveContainer width="100%" height={400}>
-        <ComposedChart data={chartData}>
-          <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+        <ComposedChart data={chartData} barCategoryGap="20%">
+          <defs>
+            <linearGradient id="colorVolume" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%" stopColor="hsl(var(--muted))" stopOpacity={0.3}/>
+              <stop offset="95%" stopColor="hsl(var(--muted))" stopOpacity={0.1}/>
+            </linearGradient>
+          </defs>
+          <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.3} />
           <XAxis 
             dataKey="time" 
             stroke="hsl(var(--muted-foreground))"
-            tick={{ fill: 'hsl(var(--muted-foreground))' }}
+            tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
+            tickLine={false}
           />
           <YAxis 
             stroke="hsl(var(--muted-foreground))"
-            tick={{ fill: 'hsl(var(--muted-foreground))' }}
+            tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
             domain={['auto', 'auto']}
+            tickLine={false}
+            orientation="right"
           />
           <Tooltip 
             contentStyle={{ 
@@ -130,65 +154,65 @@ export function TradingChart({ candles, symbol }: TradingChartProps) {
               borderRadius: '6px',
               color: 'hsl(var(--popover-foreground))'
             }}
+            content={({ payload }) => {
+              if (!payload || !payload[0]) return null;
+              const data = payload[0].payload;
+              return (
+                <div className="bg-popover border border-border rounded-lg p-3 shadow-lg">
+                  <p className="text-sm font-semibold mb-2">{data.time}</p>
+                  <div className="space-y-1 text-xs">
+                    <p>Open: <span className="font-medium">₹{data.open?.toFixed(2)}</span></p>
+                    <p>High: <span className="font-medium text-green-600">₹{data.high?.toFixed(2)}</span></p>
+                    <p>Low: <span className="font-medium text-red-600">₹{data.low?.toFixed(2)}</span></p>
+                    <p>Close: <span className="font-medium">₹{data.price?.toFixed(2)}</span></p>
+                    <p>Volume: <span className="font-medium">{data.volume?.toLocaleString()}</span></p>
+                  </div>
+                </div>
+              );
+            }}
           />
-          <Legend />
           
           {/* Bollinger Bands */}
           <Area 
             type="monotone" 
             dataKey="bbUpper" 
-            stroke="hsl(var(--muted))" 
+            stroke="hsl(var(--muted-foreground))" 
             fill="hsl(var(--muted))"
             fillOpacity={0.1}
-            name="BB Upper"
+            strokeWidth={1}
+            strokeDasharray="3 3"
+            dot={false}
           />
           <Area 
             type="monotone" 
             dataKey="bbLower" 
-            stroke="hsl(var(--muted))" 
+            stroke="hsl(var(--muted-foreground))" 
             fill="hsl(var(--muted))"
             fillOpacity={0.1}
-            name="BB Lower"
+            strokeWidth={1}
+            strokeDasharray="3 3"
+            dot={false}
           />
           
           {/* Candlesticks */}
-          <Bar 
-            dataKey="close" 
-            shape={<Candlestick />}
-            name="Price"
-          />
+          <Customized component={CandlestickLayer} data={chartData} />
           
           {/* Moving Averages */}
           <Line 
             type="monotone" 
             dataKey="sma20" 
-            stroke="hsl(var(--chart-1))" 
-            strokeWidth={1.5}
+            stroke="hsl(217, 91%, 60%)" 
+            strokeWidth={2}
             dot={false}
             name="SMA 20"
           />
           <Line 
             type="monotone" 
             dataKey="sma50" 
-            stroke="hsl(var(--chart-2))" 
-            strokeWidth={1.5}
+            stroke="hsl(271, 91%, 65%)" 
+            strokeWidth={2}
             dot={false}
             name="SMA 50"
-          />
-          
-          {/* Volume */}
-          <Bar 
-            dataKey="volume" 
-            fill="hsl(var(--muted))" 
-            fillOpacity={0.3}
-            name="Volume"
-            yAxisId="right"
-          />
-          <YAxis 
-            yAxisId="right" 
-            orientation="right" 
-            stroke="hsl(var(--muted-foreground))"
-            tick={{ fill: 'hsl(var(--muted-foreground))' }}
           />
         </ComposedChart>
       </ResponsiveContainer>

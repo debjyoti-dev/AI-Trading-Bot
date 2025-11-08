@@ -10,6 +10,9 @@ export function generateMockCandles(symbol: string, count: number = 100): Candle
   if (symbol.includes('BNB')) basePrice = 25000;
   if (symbol.includes('TCS')) basePrice = 3500;
   if (symbol.includes('RELIANCE')) basePrice = 2500;
+  if (symbol === 'NIFTY50') basePrice = 24500;
+  if (symbol.includes('NIFTY-') && symbol.includes('CE')) basePrice = 150;
+  if (symbol.includes('NIFTY-') && symbol.includes('PE')) basePrice = 120;
   
   const now = Date.now();
   const interval = 5 * 60 * 1000; // 5 minutes
@@ -70,4 +73,13 @@ export const AVAILABLE_SYMBOLS = [
   { symbol: 'TCS.NSE', name: 'TCS', type: 'stock' },
   { symbol: 'RELIANCE.NSE', name: 'Reliance', type: 'stock' },
   { symbol: 'USD/INR', name: 'US Dollar', type: 'forex' },
+  { symbol: 'NIFTY50', name: 'Nifty 50 Index', type: 'index' },
+  { symbol: 'NIFTY-24000-CE', name: 'Nifty 24000 CE', type: 'option' },
+  { symbol: 'NIFTY-24000-PE', name: 'Nifty 24000 PE', type: 'option' },
+  { symbol: 'NIFTY-24500-CE', name: 'Nifty 24500 CE', type: 'option' },
+  { symbol: 'NIFTY-24500-PE', name: 'Nifty 24500 PE', type: 'option' },
+  { symbol: 'NIFTY-25000-CE', name: 'Nifty 25000 CE', type: 'option' },
+  { symbol: 'NIFTY-25000-PE', name: 'Nifty 25000 PE', type: 'option' },
+  { symbol: 'NIFTY-25500-CE', name: 'Nifty 25500 CE', type: 'option' },
+  { symbol: 'NIFTY-25500-PE', name: 'Nifty 25500 PE', type: 'option' },
 ];

@@ -4,12 +4,15 @@ import { BotControls } from '@/components/BotControls';
 import { Portfolio } from '@/components/Portfolio';
 import { TradeHistory } from '@/components/TradeHistory';
 import { SignalFeed } from '@/components/SignalFeed';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { generateMockCandles, updateLastCandle, AVAILABLE_SYMBOLS } from '@/lib/mockMarketData';
 import { generateSignal } from '@/lib/technicalIndicators';
-import { Activity, TrendingUp } from 'lucide-react';
+import { Activity, TrendingUp, Check, ChevronsUpDown } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 const Index = () => {
   const [selectedSymbol, setSelectedSymbol] = useState('BTC/INR');
@@ -28,6 +31,7 @@ const Index = () => {
   const [trades, setTrades] = useState([]);
   const [signals, setSignals] = useState([]);
   const [user, setUser] = useState(null);
+  const [open, setOpen] = useState(false);
   const { toast } = useToast();
 
   // Check authentication
@@ -187,18 +191,129 @@ const Index = () => {
               <p className="text-muted-foreground">AI-Powered Automated Trading</p>
             </div>
           </div>
-          <Select value={selectedSymbol} onValueChange={handleSymbolChange}>
-            <SelectTrigger className="w-[200px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {AVAILABLE_SYMBOLS.map(s => (
-                <SelectItem key={s.symbol} value={s.symbol}>
-                  {s.name} ({s.symbol})
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <Popover open={open} onOpenChange={setOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                role="combobox"
+                aria-expanded={open}
+                className="w-[280px] justify-between"
+              >
+                {selectedSymbol
+                  ? AVAILABLE_SYMBOLS.find((s) => s.symbol === selectedSymbol)?.name
+                  : "Select symbol..."}
+                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-[280px] p-0">
+              <Command>
+                <CommandInput placeholder="Search symbols..." />
+                <CommandList>
+                  <CommandEmpty>No symbol found.</CommandEmpty>
+                  <CommandGroup heading="Crypto">
+                    {AVAILABLE_SYMBOLS.filter(s => s.type === 'crypto').map((s) => (
+                      <CommandItem
+                        key={s.symbol}
+                        value={s.symbol}
+                        onSelect={() => {
+                          handleSymbolChange(s.symbol);
+                          setOpen(false);
+                        }}
+                      >
+                        <Check
+                          className={cn(
+                            "mr-2 h-4 w-4",
+                            selectedSymbol === s.symbol ? "opacity-100" : "opacity-0"
+                          )}
+                        />
+                        {s.name} ({s.symbol})
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                  <CommandGroup heading="Stocks">
+                    {AVAILABLE_SYMBOLS.filter(s => s.type === 'stock').map((s) => (
+                      <CommandItem
+                        key={s.symbol}
+                        value={s.symbol}
+                        onSelect={() => {
+                          handleSymbolChange(s.symbol);
+                          setOpen(false);
+                        }}
+                      >
+                        <Check
+                          className={cn(
+                            "mr-2 h-4 w-4",
+                            selectedSymbol === s.symbol ? "opacity-100" : "opacity-0"
+                          )}
+                        />
+                        {s.name} ({s.symbol})
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                  <CommandGroup heading="Index">
+                    {AVAILABLE_SYMBOLS.filter(s => s.type === 'index').map((s) => (
+                      <CommandItem
+                        key={s.symbol}
+                        value={s.symbol}
+                        onSelect={() => {
+                          handleSymbolChange(s.symbol);
+                          setOpen(false);
+                        }}
+                      >
+                        <Check
+                          className={cn(
+                            "mr-2 h-4 w-4",
+                            selectedSymbol === s.symbol ? "opacity-100" : "opacity-0"
+                          )}
+                        />
+                        {s.name}
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                  <CommandGroup heading="Nifty Options">
+                    {AVAILABLE_SYMBOLS.filter(s => s.type === 'option').map((s) => (
+                      <CommandItem
+                        key={s.symbol}
+                        value={s.symbol}
+                        onSelect={() => {
+                          handleSymbolChange(s.symbol);
+                          setOpen(false);
+                        }}
+                      >
+                        <Check
+                          className={cn(
+                            "mr-2 h-4 w-4",
+                            selectedSymbol === s.symbol ? "opacity-100" : "opacity-0"
+                          )}
+                        />
+                        {s.name}
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                  <CommandGroup heading="Forex">
+                    {AVAILABLE_SYMBOLS.filter(s => s.type === 'forex').map((s) => (
+                      <CommandItem
+                        key={s.symbol}
+                        value={s.symbol}
+                        onSelect={() => {
+                          handleSymbolChange(s.symbol);
+                          setOpen(false);
+                        }}
+                      >
+                        <Check
+                          className={cn(
+                            "mr-2 h-4 w-4",
+                            selectedSymbol === s.symbol ? "opacity-100" : "opacity-0"
+                          )}
+                        />
+                        {s.name} ({s.symbol})
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                </CommandList>
+              </Command>
+            </PopoverContent>
+          </Popover>
         </div>
 
         {/* Main Chart */}

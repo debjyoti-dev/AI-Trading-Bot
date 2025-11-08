@@ -170,7 +170,7 @@ const Index = () => {
           <div className="flex items-center gap-3">
             <TrendingUp className="h-8 w-8 text-primary" />
             <div>
-              <h1 className="text-3xl font-bold"> Trading Bot</h1>
+              <h1 className="text-3xl font-bold">Trading Bot</h1>
               <p className="text-muted-foreground">AI-Powered Automated Trading</p>
             </div>
           </div>

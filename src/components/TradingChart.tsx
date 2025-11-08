@@ -10,9 +10,52 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
-  Area
+  Area,
+  Cell
 } from 'recharts';
 import { CandleData, calculateSMA, calculateRSI, calculateMACD, calculateBollingerBands } from '@/lib/technicalIndicators';
+
+// Custom Candlestick component
+const Candlestick = (props: any) => {
+  const { x, y, width, height, payload, index } = props;
+  const { open, close, high, low } = payload;
+  
+  const isGreen = close >= open;
+  const color = isGreen ? 'hsl(var(--chart-3))' : 'hsl(var(--chart-4))';
+  const candleWidth = Math.max(width * 0.6, 2);
+  const xPos = x + (width - candleWidth) / 2;
+  
+  // Calculate positions
+  const yHigh = y - (height * ((high - close) / (close - open || 1)));
+  const yLow = y + height + (height * ((open - low) / (close - open || 1)));
+  const yTop = isGreen ? y : y + height;
+  const yBottom = isGreen ? y + height : y;
+  const candleHeight = Math.abs(height);
+  
+  return (
+    <g>
+      {/* High-Low line (wick) */}
+      <line
+        x1={xPos + candleWidth / 2}
+        y1={yHigh}
+        x2={xPos + candleWidth / 2}
+        y2={yLow}
+        stroke={color}
+        strokeWidth={1}
+      />
+      {/* Open-Close rectangle (body) */}
+      <rect
+        x={xPos}
+        y={yTop}
+        width={candleWidth}
+        height={Math.max(candleHeight, 1)}
+        fill={color}
+        stroke={color}
+        strokeWidth={1}
+      />
+    </g>
+  );
+};
 
 interface TradingChartProps {
   candles: CandleData[];
@@ -108,13 +151,10 @@ export function TradingChart({ candles, symbol }: TradingChartProps) {
             name="BB Lower"
           />
           
-          {/* Price Line */}
-          <Line 
-            type="monotone" 
-            dataKey="price" 
-            stroke="hsl(var(--primary))" 
-            strokeWidth={2}
-            dot={false}
+          {/* Candlesticks */}
+          <Bar 
+            dataKey="close" 
+            shape={<Candlestick />}
             name="Price"
           />
           

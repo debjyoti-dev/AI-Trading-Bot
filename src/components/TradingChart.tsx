@@ -15,24 +15,35 @@ import { CandleData, calculateSMA, calculateRSI, calculateMACD, calculateBolling
 
 // Custom Candlestick Layer
 const CandlestickLayer = (props: any) => {
-  const { xAxisMap, yAxisMap, dataPointsX, dataPointsY, data } = props;
+  const { formattedGraphicalItems, xAxisMap, yAxisMap, offset } = props;
   
-  if (!xAxisMap || !yAxisMap || !data) return null;
+  if (!xAxisMap || !yAxisMap || !formattedGraphicalItems || formattedGraphicalItems.length === 0) {
+    return null;
+  }
   
   const xAxis = Object.values(xAxisMap)[0] as any;
   const yAxis = Object.values(yAxisMap)[0] as any;
   
-  if (!xAxis || !yAxis) return null;
+  if (!xAxis || !yAxis || !offset) return null;
   
-  const { x: chartX, y: chartY, width: chartWidth, height: chartHeight } = xAxis;
+  // Get the actual data
+  const data = formattedGraphicalItems[0]?.props?.data || [];
+  if (data.length === 0) return null;
+  
+  const { x: chartX, y: chartY, width: chartWidth } = offset;
   const candleWidth = Math.max((chartWidth / data.length) * 0.6, 2);
   
   return (
     <g>
       {data.map((item: any, index: number) => {
+        if (!item.open || !item.close || !item.high || !item.low) return null;
+        
         const { open, close, high, low } = item;
         
-        const x = chartX + (index * chartWidth / data.length) + (chartWidth / data.length / 2);
+        // Calculate x position for this candle
+        const xPos = chartX + (index / data.length) * chartWidth + (chartWidth / data.length / 2);
+        
+        // Calculate y positions using the scale
         const yHigh = chartY + yAxis.scale(high);
         const yLow = chartY + yAxis.scale(low);
         const yOpen = chartY + yAxis.scale(open);
@@ -46,19 +57,19 @@ const CandlestickLayer = (props: any) => {
         const bodyHeight = Math.max(Math.abs(yBottom - yTop), 1);
         
         return (
-          <g key={index}>
+          <g key={`candle-${index}`}>
             {/* Wick */}
             <line
-              x1={x}
+              x1={xPos}
               y1={yHigh}
-              x2={x}
+              x2={xPos}
               y2={yLow}
               stroke={color}
               strokeWidth={1}
             />
             {/* Body */}
             <rect
-              x={x - candleWidth / 2}
+              x={xPos - candleWidth / 2}
               y={yTop}
               width={candleWidth}
               height={bodyHeight}
@@ -195,7 +206,7 @@ export function TradingChart({ candles, symbol }: TradingChartProps) {
           />
           
           {/* Candlesticks */}
-          <Customized component={CandlestickLayer} data={chartData} />
+          <Customized component={CandlestickLayer} />
           
           {/* Moving Averages */}
           <Line 

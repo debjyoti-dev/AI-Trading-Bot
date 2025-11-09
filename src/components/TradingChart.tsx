@@ -144,16 +144,27 @@ export function TradingChart({ candles, symbol }: TradingChartProps) {
       </div>
 
       <ResponsiveContainer width="100%" height={400}>
-        <ComposedChart data={chartData} margin={{ top: 10, right: 10, bottom: 0, left: 0 }}>
+        <ComposedChart data={chartData}>
           <defs>
-            <linearGradient id="colorVolume" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="hsl(var(--muted))" stopOpacity={0.3}/>
-              <stop offset="95%" stopColor="hsl(var(--muted))" stopOpacity={0.1}/>
+            <linearGradient id="colorPrice" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.8}/>
+              <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0.1}/>
             </linearGradient>
           </defs>
-          {/* Grid removed for minimalist candle style */}
-          <XAxis dataKey="time" hide />
-          <YAxis hide domain={['auto', 'auto']} />
+          <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.3} />
+          <XAxis 
+            dataKey="time" 
+            stroke="hsl(var(--muted-foreground))"
+            tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
+            tickLine={false}
+          />
+          <YAxis 
+            stroke="hsl(var(--muted-foreground))"
+            tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
+            domain={['auto', 'auto']}
+            tickLine={false}
+            orientation="right"
+          />
           <Tooltip 
             contentStyle={{ 
               backgroundColor: 'hsl(var(--popover))',
@@ -161,33 +172,35 @@ export function TradingChart({ candles, symbol }: TradingChartProps) {
               borderRadius: '6px',
               color: 'hsl(var(--popover-foreground))'
             }}
-            content={({ payload }) => {
-              if (!payload || !payload[0]) return null;
-              const data = payload[0].payload;
-              return (
-                <div className="bg-popover border border-border rounded-lg p-3 shadow-lg">
-                  <p className="text-sm font-semibold mb-2">{data.time}</p>
-                  <div className="space-y-1 text-xs">
-                    <p>Open: <span className="font-medium">₹{data.open?.toFixed(2)}</span></p>
-                    <p>High: <span className="font-medium text-green-600">₹{data.high?.toFixed(2)}</span></p>
-                    <p>Low: <span className="font-medium text-red-600">₹{data.low?.toFixed(2)}</span></p>
-                    <p>Close: <span className="font-medium">₹{data.price?.toFixed(2)}</span></p>
-                    <p>Volume: <span className="font-medium">{data.volume?.toLocaleString()}</span></p>
-                  </div>
-                </div>
-              );
-            }}
           />
           
-          {/* Bollinger Bands hidden for minimalist candle style */}
+          {/* Price Line with Area Fill */}
+          <Area
+            type="monotone"
+            dataKey="price"
+            stroke="hsl(var(--primary))"
+            strokeWidth={2}
+            fill="url(#colorPrice)"
+            dot={false}
+          />
           
-          {/* Invisible line to populate formattedGraphicalItems */}
-          <Line dataKey="price" strokeOpacity={0} dot={false} isAnimationActive={false} />
-          
-          {/* Candlesticks */}
-          <Customized component={CandlestickLayer} />
-          
-          {/* Moving averages hidden for minimalist candle style */}
+          {/* Moving Averages */}
+          <Line 
+            type="monotone" 
+            dataKey="sma20" 
+            stroke="hsl(217, 91%, 60%)" 
+            strokeWidth={2}
+            dot={false}
+            name="SMA 20"
+          />
+          <Line 
+            type="monotone" 
+            dataKey="sma50" 
+            stroke="hsl(271, 91%, 65%)" 
+            strokeWidth={2}
+            dot={false}
+            name="SMA 50"
+          />
         </ComposedChart>
       </ResponsiveContainer>
 

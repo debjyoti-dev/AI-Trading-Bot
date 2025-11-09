@@ -31,7 +31,7 @@ const CandlestickLayer = (props: any) => {
   if (data.length === 0) return null;
   
   const { x: chartX, y: chartY, width: chartWidth } = offset;
-  const candleWidth = Math.max((chartWidth / data.length) * 0.6, 2);
+  const candleWidth = Math.max((chartWidth / data.length) * 0.5, 1.5);
   
   return (
     <g>
@@ -137,27 +137,16 @@ export function TradingChart({ candles, symbol }: TradingChartProps) {
       </div>
 
       <ResponsiveContainer width="100%" height={400}>
-        <ComposedChart data={chartData} barCategoryGap="20%">
+        <ComposedChart data={chartData} margin={{ top: 10, right: 10, bottom: 0, left: 0 }}>
           <defs>
             <linearGradient id="colorVolume" x1="0" y1="0" x2="0" y2="1">
               <stop offset="5%" stopColor="hsl(var(--muted))" stopOpacity={0.3}/>
               <stop offset="95%" stopColor="hsl(var(--muted))" stopOpacity={0.1}/>
             </linearGradient>
           </defs>
-          <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.3} />
-          <XAxis 
-            dataKey="time" 
-            stroke="hsl(var(--muted-foreground))"
-            tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
-            tickLine={false}
-          />
-          <YAxis 
-            stroke="hsl(var(--muted-foreground))"
-            tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
-            domain={['auto', 'auto']}
-            tickLine={false}
-            orientation="right"
-          />
+          {/* Grid removed for minimalist candle style */}
+          <XAxis dataKey="time" hide />
+          <YAxis hide domain={['auto', 'auto']} />
           <Tooltip 
             contentStyle={{ 
               backgroundColor: 'hsl(var(--popover))',
@@ -183,48 +172,12 @@ export function TradingChart({ candles, symbol }: TradingChartProps) {
             }}
           />
           
-          {/* Bollinger Bands */}
-          <Area 
-            type="monotone" 
-            dataKey="bbUpper" 
-            stroke="hsl(var(--muted-foreground))" 
-            fill="hsl(var(--muted))"
-            fillOpacity={0.1}
-            strokeWidth={1}
-            strokeDasharray="3 3"
-            dot={false}
-          />
-          <Area 
-            type="monotone" 
-            dataKey="bbLower" 
-            stroke="hsl(var(--muted-foreground))" 
-            fill="hsl(var(--muted))"
-            fillOpacity={0.1}
-            strokeWidth={1}
-            strokeDasharray="3 3"
-            dot={false}
-          />
+          {/* Bollinger Bands hidden for minimalist candle style */}
           
           {/* Candlesticks */}
           <Customized component={CandlestickLayer} />
           
-          {/* Moving Averages */}
-          <Line 
-            type="monotone" 
-            dataKey="sma20" 
-            stroke="hsl(217, 91%, 60%)" 
-            strokeWidth={2}
-            dot={false}
-            name="SMA 20"
-          />
-          <Line 
-            type="monotone" 
-            dataKey="sma50" 
-            stroke="hsl(271, 91%, 65%)" 
-            strokeWidth={2}
-            dot={false}
-            name="SMA 50"
-          />
+          {/* Moving averages hidden for minimalist candle style */}
         </ComposedChart>
       </ResponsiveContainer>
 

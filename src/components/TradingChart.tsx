@@ -30,20 +30,28 @@ const CandlestickLayer = (props: any) => {
   const data = formattedGraphicalItems[0]?.props?.data || [];
   if (data.length === 0) return null;
   
-  const { x: chartX, y: chartY, width: chartWidth } = offset;
-  const candleWidth = Math.max((chartWidth / data.length) * 0.5, 1.5);
+  // Read offset correctly as left/top/width
+  const { left: chartX, top: chartY, width: chartWidth } = offset;
+  
+  // Calculate band size and candle width
+  const band = xAxis.bandSize ?? chartWidth / data.length;
+  const candleWidth = Math.max(band * 0.6, 2);
   
   return (
     <g>
       {data.map((item: any, index: number) => {
-        if (!item.open || !item.close || !item.high || !item.low) return null;
-        
         const { open, close, high, low } = item;
         
-        // Calculate x position for this candle
-        const xPos = chartX + (index / data.length) * chartWidth + (chartWidth / data.length / 2);
+        // Null-safe check
+        if ([open, close, high, low].some(v => v == null)) return null;
         
-        // Calculate y positions using the scale
+        // Calculate X position using xAxis scale
+        const scaledX = typeof xAxis.scale === 'function'
+          ? xAxis.scale(item.time)
+          : (index / data.length) * chartWidth;
+        const xPos = chartX + scaledX + (xAxis.bandSize ? xAxis.bandSize / 2 : band / 2);
+        
+        // Calculate Y positions using yAxis scale and chart top offset
         const yHigh = chartY + yAxis.scale(high);
         const yLow = chartY + yAxis.scale(low);
         const yOpen = chartY + yAxis.scale(open);
@@ -52,9 +60,8 @@ const CandlestickLayer = (props: any) => {
         const isGreen = close >= open;
         const color = isGreen ? 'hsl(142, 76%, 36%)' : 'hsl(0, 84%, 60%)';
         
-        const yTop = Math.min(yOpen, yClose);
-        const yBottom = Math.max(yOpen, yClose);
-        const bodyHeight = Math.max(Math.abs(yBottom - yTop), 1);
+        const bodyHeight = Math.abs(yClose - yOpen);
+        const bodyY = Math.min(yOpen, yClose);
         
         return (
           <g key={`candle-${index}`}>
@@ -70,9 +77,9 @@ const CandlestickLayer = (props: any) => {
             {/* Body */}
             <rect
               x={xPos - candleWidth / 2}
-              y={yTop}
+              y={bodyY}
               width={candleWidth}
-              height={bodyHeight}
+              height={Math.max(bodyHeight, 1)}
               fill={color}
               stroke={color}
             />
@@ -173,6 +180,9 @@ export function TradingChart({ candles, symbol }: TradingChartProps) {
           />
           
           {/* Bollinger Bands hidden for minimalist candle style */}
+          
+          {/* Invisible line to populate formattedGraphicalItems */}
+          <Line dataKey="price" strokeOpacity={0} dot={false} isAnimationActive={false} />
           
           {/* Candlesticks */}
           <Customized component={CandlestickLayer} />

@@ -2,7 +2,7 @@ import { useEffect, useRef, memo } from 'react';
 import { createChart, IChartApi, ISeriesApi, CandlestickData, ColorType, CandlestickSeries } from 'lightweight-charts';
 
 export interface CandleData {
-  time: string;
+  time: number; // Unix timestamp in seconds
   open: number;
   high: number;
   low: number;
@@ -101,9 +101,16 @@ const CandlestickChart = memo(({ data, height = 400 }: CandlestickChartProps) =>
   useEffect(() => {
     if (!seriesRef.current || !data.length) return;
 
-    // Convert data format for lightweight-charts
-    const formattedData: CandlestickData[] = data.map((item) => ({
-      time: item.time as unknown as CandlestickData['time'],
+    // Sort and deduplicate data by time (lightweight-charts requires unique ascending times)
+    const uniqueData = data
+      .filter((item, index, arr) => 
+        index === 0 || item.time > arr[index - 1].time
+      )
+      .sort((a, b) => a.time - b.time);
+
+    // Convert data format for lightweight-charts (time as UTCTimestamp)
+    const formattedData = uniqueData.map((item) => ({
+      time: item.time as CandlestickData['time'],
       open: item.open,
       high: item.high,
       low: item.low,

@@ -18,7 +18,8 @@ export function TradingChart({ candles, symbol }: TradingChartProps) {
     const bb = calculateBollingerBands(closePrices);
 
     return candles.map((candle, i) => ({
-      time: new Date(candle.timestamp).toISOString().split('T')[0], // Format as YYYY-MM-DD for lightweight-charts
+      // Use Unix timestamp in seconds (lightweight-charts requires unique ascending times)
+      time: Math.floor(candle.timestamp / 1000),
       price: candle.close,
       high: candle.high,
       low: candle.low,
